@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../test_helper'
+require 'rubygems/package'
 
 class TestArchive < Test::Unit::TestCase
   
@@ -11,6 +12,16 @@ class TestArchive < Test::Unit::TestCase
   
   def tempfile
     Tempfile.new('archive-test').path
+  end
+
+  def archive_files(filename)
+    files = []
+    archive = File.open(filename)
+    tar = Gem::Package::TarReader.new(archive)
+    tar.each { |entry| files << entry.full_name }
+    tar.close
+    archive.close
+    files[1..-1] #The first element is a Tar header
   end
   
   def test_archive
@@ -26,9 +37,9 @@ class TestArchive < Test::Unit::TestCase
     f = @git.object('v2.6').archive(nil, :format => 'tar') # returns path to temp file
     assert(File.exists?(f))
     
-    lines = `cd /tmp; tar xvpf #{f}`.split("\n")
-    assert_equal('ex_dir/', lines[0])
-    assert_equal('example.txt', lines[2])
+    files = archive_files f
+    assert_equal('ex_dir/', files[0])
+    assert_equal('example.txt', files[2])
     
     f = @git.object('v2.6').archive(tempfile, :format => 'zip')
     assert(File.file?(f))
@@ -39,9 +50,9 @@ class TestArchive < Test::Unit::TestCase
     f = @git.object('v2.6').archive(tempfile, :format => 'tar', :prefix => 'test/', :path => 'ex_dir/')
     assert(File.exists?(f))
     
-    lines = `cd /tmp; tar xvpf #{f}`.split("\n")
-    assert_equal('test/', lines[0])
-    assert_equal('test/ex_dir/ex.txt', lines[2])
+    files = archive_files f
+    assert_equal('test/', files[0])
+    assert_equal('test/ex_dir/ex.txt', files[2])
 
     in_temp_dir do
       c = Git.clone(@wbare, 'new')
