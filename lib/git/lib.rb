@@ -570,14 +570,16 @@ module Git
       command('fetch', remote)
     end
     
-    def push(remote, branch = 'master', tags = false)
-      command('push', [remote, branch])
+    def push(remote, branch = 'master', tags = false, force = false)
+      opts = [remote, branch]
+      opts.unshift('--force') if force
+      command('push', opts)
       command('push', ['--tags', remote]) if tags
     end
 
-		def pull(remote='origin', branch='master')
-			command('pull', [remote, branch])
-		end
+    def pull(remote='origin', branch='master')
+      command('pull', [remote, branch])
+    end
 
     def tag_sha(tag_name)
       head = File.join(@git_dir, 'refs', 'tags', tag_name)

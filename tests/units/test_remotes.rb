@@ -117,8 +117,23 @@ class TestRemotes < Test::Unit::TestCase
       assert(rem.status['test-file1'])    
       assert(rem.status['test-file3'])    
       assert(rem.tag('test-tag'))
+
+      # Add a commit on remote, force push local to remote, and make sure the original
+      # file on remote is restored
+      rem.chdir do
+        rem.branch('testbranch').in_branch('overwritten commit') do
+          update_file('test-file3', 'test four')
+          rem.add
+          true
+        end
+      end
+
+      loc.push('testrem', 'testbranch', false, true)
+      rem.checkout('testbranch')
+      rem.reset_hard # Sync the working tree with the index
+      loc.checkout('testbranch')
+
+      assert(rem.status['test-file3'].sha_index == loc.status['test-file3'].sha_index)
     end
   end
-
-
 end
