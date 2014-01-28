@@ -567,8 +567,11 @@ module Git
     end
 
     
-    def fetch(remote)
-      command('fetch', remote)
+    def fetch(remote, opts)
+      arr_opts = [remote]
+      arr_opts << '--tags' if opts[:t] || opts[:tags]
+
+      command('fetch', arr_opts)
     end
     
     def push(remote, branch = 'master', tags = false, force = false)
